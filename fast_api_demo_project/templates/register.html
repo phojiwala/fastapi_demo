@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - FastAPI User Authentication</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <section class="register">
+        <h1>Register</h1>
+        <form id="registerForm">
+            <input type="text" id="fullname" placeholder="Full Name" required><br>
+            <input type="text" id="username" placeholder="Username" required><br>
+            <input type="tel" id="phone_no" placeholder="Phone Number" required><br>
+            <input type="email" id="email" placeholder="Email" required><br>
+            <input type="password" id="password" placeholder="Password" required><br>
+            <button type="submit">Register</button>
+        </form>
+        <p id="register-error" class="error"></p>
+        <p>Already have an account? <a href="/login">Login here</a></p>
+    </section>
+
+    <script>
+        // Register User
+        document.getElementById('registerForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const userData = {
+                fullname: document.getElementById('fullname').value,
+                username: document.getElementById('username').value,
+                phone_no: document.getElementById('phone_no').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    alert("Registration successful! Please log in.");
+                    window.location.href = '/login';  // Redirect to login page
+                } else {
+                    const data = await response.json();
+                    document.getElementById('register-error').textContent = data.detail || "Error during registration.";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('register-error').textContent = "An unexpected error occurred.";
+            }
+        });
+    </script>
+</body>
+</html>

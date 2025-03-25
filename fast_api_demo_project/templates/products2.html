@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Scroll Products</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #product-list { display: flex; flex-wrap: wrap; gap: 10px; }
+        .product { border: 1px solid #ddd; padding: 10px; width: 200px; transition: opacity 0.3s; }
+        #loading { font-size: 16px; color: red; display: none; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h2>Product Dashboard</h2>
+    <button onclick="logout()">Logout</button>
+    <div id="product-list"></div>
+    <p id="loading">Loading products...</p>
+
+    <script>
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMoreProducts = true;
+
+        async function fetchProducts(page = 1) {
+            if (isLoading || !hasMoreProducts) return;
+            
+            isLoading = true;
+            console.time(`FetchProducts Page ${page}`);
+            document.getElementById("loading").style.display = "block";
+
+            try {
+                console.log("Fetching started at:", new Date().toISOString());
+                const response = await fetch(`http://192.168.1.24:8000/list_products?page=${page}&limit=10`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                console.log("Response received at:", new Date().toISOString());
+                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+                const data = await response.json();
+                console.log("Data processed at:", new Date().toISOString());
+
+                if (data.products.length === 0) {
+                    hasMoreProducts = false; // No more products to load
+                } else {
+                    renderProducts(data.products);
+                    currentPage = page;
+                }
+            } catch (error) {
+                console.error("Error fetching products:", error);
+                alert("Session expired. Please log in again.");
+                localStorage.removeItem('authToken');
+                window.location.href = '/login';
+            } finally {
+                isLoading = false;
+                document.getElementById("loading").style.display = "none";
+                console.timeEnd(`FetchProducts Page ${page}`);
+            }
+        }
+
+        function renderProducts(products) {
+            const productList = document.getElementById("product-list");
+            const fragment = document.createDocumentFragment();
+
+            products.forEach(product => {
+                const productDiv = document.createElement("div");
+                productDiv.classList.add("product");
+                productDiv.innerHTML = `<h3>${product.name}</h3>
+                                        <p>${product.description}</p>
+                                        <p><b>Price:</b> $${product.price}</p>
+                                        <p><b>Stock:</b> ${product.stock}</p>
+                                        <p><b>Category:</b> ${product.category_id}</p>`;
+                fragment.appendChild(productDiv);
+            });
+
+            productList.appendChild(fragment);
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/login';
+        }
+
+        function handleScroll() {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+                fetchProducts(currentPage + 1);
+            }
+        }
+
+        window.addEventListener('scroll', handleScroll);
+
+        // Initial fetch
+        fetchProducts(currentPage);
+    </script>
+
+</body>
+</html>

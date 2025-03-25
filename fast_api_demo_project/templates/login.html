@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - FastAPI User Authentication</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+  <section class="login">
+    <h1>Log in</h1>
+    <form id="loginForm">
+      <input type="text" id="loginUsername" placeholder="Username" value="omkar6801" required>
+      <input type="password" id="loginPassword" placeholder="Password" value="886644" required>
+      <button type="submit">Log in</button>
+    </form>
+    <p id="login-error" class="error"></p>
+    <p>Don't have an account? <a href="/register">Sign up</a></p>
+  </section>
+
+  <script>
+    // Login User
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const loginData = {
+        username: document.getElementById('loginUsername').value,
+        password: document.getElementById('loginPassword').value
+      };
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(loginData)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          alert('Login successful! Welcome ' + data.user);
+
+          // Save the token to localStorage
+          if (data.access_token) {
+            console.log("Saving token to localStorage:", data.access_token); // Log the token before saving
+            localStorage.setItem('authToken', data.access_token);
+          } else {
+            console.log("No token in response data");
+          }
+
+          // Redirect to the products page
+          window.location.href = '/products';  // Redirect to home page or dashboard
+        } else {
+          const data = await response.json();
+          document.getElementById('login-error').textContent = data.detail || "Invalid login credentials.";
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('login-error').textContent = "An unexpected error occurred.";
+      }
+    });
+  </script>
+
+</body>
+
+</html>
